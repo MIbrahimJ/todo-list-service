@@ -2,6 +2,7 @@ package com.tradebyte.todo.controller;
 
 import com.tradebyte.todo.dto.TodoRequest;
 import com.tradebyte.todo.dto.TodoResponse;
+import com.tradebyte.todo.dto.TodoSliceResponse;
 import com.tradebyte.todo.dto.UpdateDescriptionRequest;
 import com.tradebyte.todo.service.TodoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,10 +13,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/todos")
@@ -59,15 +60,33 @@ public class TodoController {
     @GetMapping
     @Operation(summary = "Get todo items")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Todo items retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Todo items retrieved successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid pagination parameters")
     })
-    public ResponseEntity<List<TodoResponse>> getTodoItems(
+    public ResponseEntity<TodoSliceResponse<TodoResponse>> getTodoItems(
             @Parameter(description = "Include all items regardless of status")
-            @RequestParam(defaultValue = "false") boolean includeAll) {
-        logger.debug("Received request to get todo items, includeAll: {}", includeAll);
-        List<TodoResponse> responses = todoService.getAllNotDoneItems(includeAll);
-        return ResponseEntity.ok(responses);
+            @RequestParam(defaultValue = "false") boolean includeAll,
+
+            @Parameter(description = "Page number (0-indexed)")
+            @RequestParam(defaultValue = "0") int page,
+
+            @Parameter(description = "Page size (max: 100)")
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        int validatedSize = Math.min(Math.max(size, 1), 100);
+
+        Slice<TodoResponse> slice = todoService.getAllNotDoneItems(includeAll, page, validatedSize);
+
+        TodoSliceResponse<TodoResponse> response = new TodoSliceResponse<>(
+                slice.getContent(),
+                page,
+                validatedSize,
+                slice.hasNext()
+        );
+
+        return ResponseEntity.ok(response);
     }
+
 
     @PatchMapping("/{id}/description")
     @Operation(summary = "Update a todo item's description")

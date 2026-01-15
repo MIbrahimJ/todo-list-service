@@ -9,6 +9,9 @@ import com.tradebyte.todo.exception.ValidationException;
 import com.tradebyte.todo.repository.TodoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,19 +53,37 @@ public class TodoService {
         return new TodoResponse(todoItem);
     }
 
+
     @Transactional(readOnly = true)
-    public List<TodoResponse> getAllNotDoneItems(boolean includeAll) {
-        logger.debug("Fetching todo items, includeAll: {}", includeAll);
+    public Slice<TodoResponse> getAllNotDoneItems(
+            boolean includeAll,
+            int page,
+            int size
+    ) {
+        int pageSize = Math.min(Math.max(size, 1), 100);
+        int pageNumber = Math.max(page, 0);
+
+        Pageable pageable = PageRequest.of(
+                pageNumber,
+                pageSize
+        );
+
+        Slice<TodoItem> slice;
 
         if (includeAll) {
-            return todoRepository.findAll().stream()
-                    .map(TodoResponse::new)
-                    .collect(Collectors.toList());
+            slice = todoRepository.findAll(pageable);
+        } else {
+            slice = todoRepository.findByStatus(
+                    TodoItem.Status.NOT_DONE,
+                    pageable
+            );
         }
 
-        return todoRepository.findByStatus(TodoItem.Status.NOT_DONE).stream()
-                .map(TodoResponse::new)
-                .collect(Collectors.toList());
+        if (!includeAll && slice.hasNext()) {
+            logger.warn("Potentially large result set detected for NOT_DONE items");
+        }
+
+        return slice.map(TodoResponse::new);
     }
 
     @Transactional

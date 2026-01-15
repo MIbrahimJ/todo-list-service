@@ -166,12 +166,17 @@ class TodoIntegrationTest {
             todoRepository.saveAll(List.of(notDoneItem, doneItem));
 
             // When & Then - Get not done items only
-            mockMvc.perform(get("/api/v1/todos"))
+            mockMvc.perform(get("/api/v1/todos")
+                            .param("page", "0")
+                            .param("size", "20")) // Default includeAll=false
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").isArray())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].description").value("Pending task"))
-                    .andExpect(jsonPath("$[0].status").value("not done"));
+                    .andExpect(jsonPath("$.content").isArray())
+                    .andExpect(jsonPath("$.content.length()").value(1))
+                    .andExpect(jsonPath("$.content[0].description").value("Pending task"))
+                    .andExpect(jsonPath("$.content[0].status").value("not done"))
+                    .andExpect(jsonPath("$.page").value(0))
+                    .andExpect(jsonPath("$.size").value(20))
+                    .andExpect(jsonPath("$.hasNext").value(false));
         }
 
         @Test
@@ -195,13 +200,19 @@ class TodoIntegrationTest {
 
             todoRepository.saveAll(List.of(notDoneItem, doneItem));
 
-            // When & Then - Get all items
-            mockMvc.perform(get("/api/v1/todos?includeAll=true"))
+            // When & Then
+            mockMvc.perform(get("/api/v1/todos")
+                            .param("includeAll", "true")
+                            .param("page", "0")
+                            .param("size", "20"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").isArray())
-                    .andExpect(jsonPath("$.length()").value(2))
-                    .andExpect(jsonPath("$[?(@.status == 'not done')]").exists())
-                    .andExpect(jsonPath("$[?(@.status == 'done')]").exists());
+                    .andExpect(jsonPath("$.content").isArray())
+                    .andExpect(jsonPath("$.content.length()").value(2))
+                    .andExpect(jsonPath("$.content[?(@.status == 'not done')]").exists())
+                    .andExpect(jsonPath("$.content[?(@.status == 'done')]").exists())
+                    .andExpect(jsonPath("$.page").value(0))
+                    .andExpect(jsonPath("$.size").value(20))
+                    .andExpect(jsonPath("$.hasNext").value(false));
         }
     }
 

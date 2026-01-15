@@ -15,6 +15,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -254,18 +257,18 @@ class TodoServiceTest {
                     .status(TodoItem.Status.DONE)
                     .build();
 
-            when(todoRepository.findByStatus(TodoItem.Status.NOT_DONE))
-                    .thenReturn(List.of(sampleTodoItem));
+            when(todoRepository.findByStatus(eq(TodoItem.Status.NOT_DONE), any(Pageable.class)))
+                    .thenReturn(new PageImpl<>(List.of(sampleTodoItem)));
 
             // When
-            List<TodoResponse> responses = todoService.getAllNotDoneItems(false);
+            Slice<TodoResponse> responses = todoService.getAllNotDoneItems(false, 0, 10);
 
             // Then
-            assertThat(responses).hasSize(1);
-            assertThat(responses.get(0).status()).isEqualTo("not done");
-            assertThat(responses.get(0).description()).isEqualTo("Complete project documentation");
+            assertThat(responses.getContent()).hasSize(1);
+            assertThat(responses.getContent().get(0).status()).isEqualTo("not done");
+            assertThat(responses.getContent().get(0).description()).isEqualTo("Complete project documentation");
 
-            verify(todoRepository).findByStatus(TodoItem.Status.NOT_DONE);
+            verify(todoRepository).findByStatus(eq(TodoItem.Status.NOT_DONE), any(Pageable.class));
         }
 
         @Test
@@ -278,17 +281,18 @@ class TodoServiceTest {
                     .status(TodoItem.Status.DONE)
                     .build();
 
-            when(todoRepository.findAll()).thenReturn(List.of(sampleTodoItem, doneItem));
+            when(todoRepository.findAll(any(Pageable.class)))
+                    .thenReturn(new PageImpl<>(List.of(sampleTodoItem, doneItem)));
 
             // When
-            List<TodoResponse> responses = todoService.getAllNotDoneItems(true);
+            Slice<TodoResponse> responses = todoService.getAllNotDoneItems(true, 0, 10);
 
             // Then
-            assertThat(responses).hasSize(2);
-            assertThat(responses).extracting("status")
+            assertThat(responses.getContent()).hasSize(2);
+            assertThat(responses.getContent()).extracting("status")
                     .containsExactlyInAnyOrder("not done", "done");
 
-            verify(todoRepository).findAll();
+            verify(todoRepository).findAll(any(Pageable.class));
         }
     }
 
