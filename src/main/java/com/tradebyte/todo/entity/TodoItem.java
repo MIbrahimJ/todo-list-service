@@ -2,6 +2,8 @@ package com.tradebyte.todo.entity;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -9,6 +11,8 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "todo_items")
+@Builder
+@AllArgsConstructor
 public class TodoItem {
 
     public enum Status {

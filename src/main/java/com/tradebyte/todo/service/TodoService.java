@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,9 +29,13 @@ public class TodoService {
 
     @Transactional
     public TodoResponse createTodoItem(TodoRequest request) {
-        logger.info("Creating new todo item with description: {}", request.getDescription());
+        logger.info("Creating new todo item with description: {}", request.description());
 
-        TodoItem todoItem = new TodoItem(request.getDescription(), request.getDueDateTime());
+        TodoItem todoItem = new TodoItem(
+                request.description(),
+                request.dueDateTime()
+        );
+
         TodoItem savedItem = todoRepository.save(todoItem);
 
         logger.debug("Created todo item with id: {}", savedItem.getId());
@@ -70,7 +75,8 @@ public class TodoService {
             throw new ValidationException("Cannot update a past due item");
         }
 
-        todoItem.setDescription(request.getDescription());
+        todoItem.setDescription(request.description());
+
         TodoItem updatedItem = todoRepository.save(todoItem);
 
         logger.debug("Updated description for todo item id: {}", id);
@@ -89,6 +95,7 @@ public class TodoService {
 
         todoItem.setStatus(TodoItem.Status.DONE);
         todoItem.setDoneDateTime(LocalDateTime.now());
+
         TodoItem updatedItem = todoRepository.save(todoItem);
 
         logger.debug("Marked todo item as done, id: {}", id);
@@ -107,6 +114,7 @@ public class TodoService {
 
         todoItem.setStatus(TodoItem.Status.NOT_DONE);
         todoItem.setDoneDateTime(null);
+
         TodoItem updatedItem = todoRepository.save(todoItem);
 
         logger.debug("Marked todo item as not done, id: {}", id);
