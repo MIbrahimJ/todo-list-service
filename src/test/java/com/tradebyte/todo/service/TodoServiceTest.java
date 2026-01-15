@@ -233,7 +233,6 @@ class TodoServiceTest {
             sampleTodoItem.setDoneDateTime(currentDateTime.minusHours(1));
 
             when(todoRepository.findById(todoId)).thenReturn(Optional.of(sampleTodoItem));
-            when(todoRepository.save(any(TodoItem.class))).thenReturn(sampleTodoItem);
 
             // When
             TodoResponse response = todoService.markAsDone(todoId);
@@ -251,12 +250,6 @@ class TodoServiceTest {
         @DisplayName("Given includeAll is false, when getting todo items, then return only not done items")
         void givenIncludeAllFalse_whenGetTodoItems_thenReturnOnlyNotDoneItems() {
             // Given
-            TodoItem doneItem = TodoItem.builder()
-                    .id(2L)
-                    .description("Completed task")
-                    .status(TodoItem.Status.DONE)
-                    .build();
-
             when(todoRepository.findByStatus(eq(TodoItem.Status.NOT_DONE), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of(sampleTodoItem)));
 
@@ -304,37 +297,30 @@ class TodoServiceTest {
         @DisplayName("Given not done items with past due dates, when updating past due items, then update status to past due")
         void givenNotDoneItemsWithPastDueDates_whenUpdatePastDueItems_thenUpdateStatusToPastDue() {
             // Given
-            TodoItem pastDueItem = TodoItem.builder()
-                    .id(3L)
-                    .description("Overdue task")
-                    .status(TodoItem.Status.NOT_DONE)
-                    .dueDateTime(currentDateTime.minusHours(1))
-                    .build();
-
-            when(todoRepository.findPastDueNotDoneItems(any(LocalDateTime.class)))
-                    .thenReturn(List.of(pastDueItem));
-            when(todoRepository.saveAll(anyList())).thenReturn(List.of(pastDueItem));
+            when(todoRepository.markPastDueItems(any(LocalDateTime.class)))
+                    .thenReturn(1);
 
             // When
-            todoService.updatePastDueItems();
+            int updatedCount = todoService.updatePastDueItemsBulk();
 
             // Then
-            assertThat(pastDueItem.getStatus()).isEqualTo(TodoItem.Status.PAST_DUE);
-            verify(todoRepository).saveAll(anyList());
+            assertThat(updatedCount).isEqualTo(1);
+            verify(todoRepository).markPastDueItems(any(LocalDateTime.class));
         }
 
         @Test
         @DisplayName("Given no past due items, when updating past due items, then do not save anything")
         void givenNoPastDueItems_whenUpdatePastDueItems_thenDoNotSaveAnything() {
             // Given
-            when(todoRepository.findPastDueNotDoneItems(any(LocalDateTime.class)))
-                    .thenReturn(List.of());
+            when(todoRepository.markPastDueItems(any(LocalDateTime.class)))
+                    .thenReturn(0);
 
             // When
-            todoService.updatePastDueItems();
+            int updatedCount = todoService.updatePastDueItemsBulk();
 
             // Then
-            verify(todoRepository, never()).saveAll(anyList());
+            assertThat(updatedCount).isEqualTo(0);
+            verify(todoRepository).markPastDueItems(any(LocalDateTime.class));
         }
     }
 }

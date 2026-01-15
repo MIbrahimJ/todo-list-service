@@ -261,7 +261,7 @@ class TodoIntegrationTest {
             // When & Then
             mockMvc.perform(patch("/api/v1/todos/{id}/done", savedItem.getId()))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.message").value("Cannot mark a past due item as done"));
+                    .andExpect(jsonPath("$.message").value("Cannot change status of a past due item (id: " + savedItem.getId() + ")"));
         }
     }
 

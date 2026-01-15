@@ -7,6 +7,7 @@ import com.tradebyte.todo.entity.TodoItem;
 import com.tradebyte.todo.exception.ResourceNotFoundException;
 import com.tradebyte.todo.exception.ValidationException;
 import com.tradebyte.todo.repository.TodoRepository;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -16,19 +17,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 public class TodoService {
 
     private static final Logger logger = LoggerFactory.getLogger(TodoService.class);
 
     private final TodoRepository todoRepository;
-
-    public TodoService(TodoRepository todoRepository) {
-        this.todoRepository = todoRepository;
-    }
 
     @Transactional
     public TodoResponse createTodoItem(TodoRequest request) {
@@ -97,7 +93,6 @@ public class TodoService {
         }
 
         todoItem.setDescription(request.description());
-
         TodoItem updatedItem = todoRepository.save(todoItem);
 
         logger.debug("Updated description for todo item id: {}", id);
@@ -106,54 +101,55 @@ public class TodoService {
 
     @Transactional
     public TodoResponse markAsDone(Long id) {
-        logger.info("Marking todo item as done, id: {}", id);
-
-        TodoItem todoItem = findTodoItemOrThrow(id);
-
-        if (todoItem.isImmutable()) {
-            throw new ValidationException("Cannot mark a past due item as done");
-        }
-
-        todoItem.setStatus(TodoItem.Status.DONE);
-        todoItem.setDoneDateTime(LocalDateTime.now());
-
-        TodoItem updatedItem = todoRepository.save(todoItem);
-
-        logger.debug("Marked todo item as done, id: {}", id);
-        return new TodoResponse(updatedItem);
+        return updateStatus(id, TodoItem.Status.DONE);
     }
 
     @Transactional
     public TodoResponse markAsNotDone(Long id) {
-        logger.info("Marking todo item as not done, id: {}", id);
+        return updateStatus(id, TodoItem.Status.NOT_DONE);
+    }
+
+    @Transactional
+    public int updatePastDueItemsBulk() {
+
+        LocalDateTime now = LocalDateTime.now();
+
+        logger.debug("Starting bulk update for past due items at {}", now);
+
+        int updatedCount = todoRepository.markPastDueItems(now);
+
+        if (updatedCount > 0) {
+            logger.info("Bulk update completed: {} todo items marked as PAST_DUE", updatedCount);
+        } else {
+            logger.debug("No past due todo items found to update");
+        }
+
+        return updatedCount;
+    }
+
+    private TodoResponse updateStatus(Long id, TodoItem.Status newStatus) {
+        logger.info("Updating todo item status, id: {}, newStatus: {}", id, newStatus);
 
         TodoItem todoItem = findTodoItemOrThrow(id);
 
         if (todoItem.isImmutable()) {
-            throw new ValidationException("Cannot mark a past due item as not done");
+            throw new ValidationException(
+                    "Cannot change status of a past due item (id: " + id + ")"
+            );
         }
 
-        todoItem.setStatus(TodoItem.Status.NOT_DONE);
-        todoItem.setDoneDateTime(null);
+        if (todoItem.getStatus() == newStatus) {
+            logger.info("Item {} is already marked as {}", id, newStatus);
+            return new TodoResponse(todoItem);
+        }
+
+        todoItem.setStatus(newStatus);
+        todoItem.setDoneDateTime(newStatus == TodoItem.Status.DONE ? LocalDateTime.now() : null);
 
         TodoItem updatedItem = todoRepository.save(todoItem);
 
-        logger.debug("Marked todo item as not done, id: {}", id);
+        logger.debug("Updated todo item id: {} to status {}", id, newStatus);
         return new TodoResponse(updatedItem);
-    }
-
-    @Transactional
-    public void updatePastDueItems() {
-        logger.info("Updating past due items");
-
-        LocalDateTime now = LocalDateTime.now();
-        List<TodoItem> pastDueItems = todoRepository.findPastDueNotDoneItems(now);
-
-        if (!pastDueItems.isEmpty()) {
-            pastDueItems.forEach(item -> item.setStatus(TodoItem.Status.PAST_DUE));
-            todoRepository.saveAll(pastDueItems);
-            logger.info("Updated {} items to past due status", pastDueItems.size());
-        }
     }
 
     private TodoItem findTodoItemOrThrow(Long id) {
