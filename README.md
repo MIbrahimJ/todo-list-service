@@ -33,6 +33,12 @@ This service provides a RESTful API for managing todo items with automatic statu
 - Maven 3.6+
 - Docker & Docker Compose (optional)
 
+
+### Clone the repository
+```bash
+git clone https://github.com/MIbrahimJ/todo-list-service.git
+```
+
 ### Build with Maven
 ```bash
 mvn clean package
@@ -41,7 +47,11 @@ mvn clean package
 ```bash
 mvn clean package -DskipTests
 ```
-### Start the app
+### Run all tests
+```bash
+mvn test
+```
+### Run the Service Locally
 ```bash
  mvn spring-boot:run
 ```
