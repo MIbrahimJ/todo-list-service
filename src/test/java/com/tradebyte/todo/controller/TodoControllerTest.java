@@ -48,7 +48,7 @@ class TodoControllerTest {
     }
 
     @Nested
-    @DisplayName("POST /api/v1/todos - Create Todo Item")
+    @DisplayName("POST /v1/todos - Create Todo Item")
     class CreateTodoItemTests {
 
         @Test
@@ -71,7 +71,7 @@ class TodoControllerTest {
             when(todoService.createTodoItem(any(TodoRequest.class))).thenReturn(response);
 
             // When & Then
-            mockMvc.perform(post("/api/v1/todos")
+            mockMvc.perform(post("/v1/todos")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated())
@@ -91,7 +91,7 @@ class TodoControllerTest {
                     .build();
 
             // When & Then
-            mockMvc.perform(post("/api/v1/todos")
+            mockMvc.perform(post("/v1/todos")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
@@ -108,7 +108,7 @@ class TodoControllerTest {
                     .build();
 
             // When & Then
-            mockMvc.perform(post("/api/v1/todos")
+            mockMvc.perform(post("/v1/todos")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
@@ -118,7 +118,7 @@ class TodoControllerTest {
     }
 
     @Nested
-    @DisplayName("GET /api/v1/todos/{id} - Get Todo Item")
+    @DisplayName("GET /v1/todos/{id} - Get Todo Item")
     class GetTodoItemTests {
 
         @Test
@@ -137,7 +137,7 @@ class TodoControllerTest {
             when(todoService.getTodoItem(todoId)).thenReturn(response);
 
             // When & Then
-            mockMvc.perform(get("/api/v1/todos/{id}", todoId))
+            mockMvc.perform(get("/v1/todos/{id}", todoId))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(todoId))
                     .andExpect(jsonPath("$.description").value("Review pull requests"))
@@ -155,14 +155,14 @@ class TodoControllerTest {
                     .thenThrow(new ResourceNotFoundException("Todo item not found with id: " + nonExistingId));
 
             // When & Then
-            mockMvc.perform(get("/api/v1/todos/{id}", nonExistingId))
+            mockMvc.perform(get("/v1/todos/{id}", nonExistingId))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").value("Todo item not found with id: 999"));
         }
     }
 
     @Nested
-    @DisplayName("PATCH /api/v1/todos/{id}/description - Update Todo Description")
+    @DisplayName("PATCH /v1/todos/{id}/description - Update Todo Description")
     class UpdateDescriptionTests {
 
         @Test
@@ -186,7 +186,7 @@ class TodoControllerTest {
                     .thenReturn(response);
 
             // When & Then
-            mockMvc.perform(patch("/api/v1/todos/{id}/description", todoId)
+            mockMvc.perform(patch("/v1/todos/{id}/description", todoId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -204,7 +204,7 @@ class TodoControllerTest {
                     .build();
 
             // When & Then
-            mockMvc.perform(patch("/api/v1/todos/{id}/description", todoId)
+            mockMvc.perform(patch("/v1/todos/{id}/description", todoId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
@@ -212,7 +212,7 @@ class TodoControllerTest {
     }
 
     @Nested
-    @DisplayName("PATCH /api/v1/todos/{id}/done - Mark Todo as Done")
+    @DisplayName("PATCH /v1/todos/{id}/done - Mark Todo as Done")
     class MarkAsDoneTests {
 
         @Test
@@ -230,7 +230,7 @@ class TodoControllerTest {
             when(todoService.markAsDone(todoId)).thenReturn(response);
 
             // When & Then
-            mockMvc.perform(patch("/api/v1/todos/{id}/done", todoId))
+            mockMvc.perform(patch("/v1/todos/{id}/done", todoId))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(todoId))
                     .andExpect(jsonPath("$.status").value("done"))
@@ -246,14 +246,14 @@ class TodoControllerTest {
                     .thenThrow(new ValidationException("Cannot mark a past due item as done"));
 
             // When & Then
-            mockMvc.perform(patch("/api/v1/todos/{id}/done", todoId))
+            mockMvc.perform(patch("/v1/todos/{id}/done", todoId))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.message").value("Cannot mark a past due item as done"));
         }
     }
 
     @Nested
-    @DisplayName("PATCH /api/v1/todos/{id}/not-done - Mark Todo as Not Done")
+    @DisplayName("PATCH /v1/todos/{id}/not-done - Mark Todo as Not Done")
     class MarkAsNotDoneTests {
 
         @Test
@@ -271,7 +271,7 @@ class TodoControllerTest {
             when(todoService.markAsNotDone(todoId)).thenReturn(response);
 
             // When & Then
-            mockMvc.perform(patch("/api/v1/todos/{id}/not-done", todoId))
+            mockMvc.perform(patch("/v1/todos/{id}/not-done", todoId))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(todoId))
                     .andExpect(jsonPath("$.status").value("not done"));

@@ -63,7 +63,7 @@ class TodoIntegrationTest {
                     .build();
 
             // When & Then
-            String createResponse = mockMvc.perform(post("/api/v1/todos")
+            String createResponse = mockMvc.perform(post("/v1/todos")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(createRequest)))
                     .andExpect(status().isCreated())
@@ -78,7 +78,7 @@ class TodoIntegrationTest {
             Long createdId = objectMapper.readTree(createResponse).get("id").asLong();
 
             // When & Then
-            mockMvc.perform(get("/api/v1/todos/{id}", createdId))
+            mockMvc.perform(get("/v1/todos/{id}", createdId))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(createdId))
                     .andExpect(jsonPath("$.description").value(todoDescription))
@@ -103,7 +103,7 @@ class TodoIntegrationTest {
                     .build();
 
             // When & Then
-            mockMvc.perform(patch("/api/v1/todos/{id}/description", savedItem.getId())
+            mockMvc.perform(patch("/v1/todos/{id}/description", savedItem.getId())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(updateRequest)))
                     .andExpect(status().isOk())
@@ -128,7 +128,7 @@ class TodoIntegrationTest {
             TodoItem savedItem = todoRepository.save(todoItem);
 
             // When & Then
-            mockMvc.perform(patch("/api/v1/todos/{id}/done", savedItem.getId()))
+            mockMvc.perform(patch("/v1/todos/{id}/done", savedItem.getId()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(savedItem.getId()))
                     .andExpect(jsonPath("$.status").value("done"))
@@ -166,7 +166,7 @@ class TodoIntegrationTest {
             todoRepository.saveAll(List.of(notDoneItem, doneItem));
 
             // When & Then - Get not done items only
-            mockMvc.perform(get("/api/v1/todos")
+            mockMvc.perform(get("/v1/todos")
                             .param("page", "0")
                             .param("size", "20")) // Default includeAll=false
                     .andExpect(status().isOk())
@@ -201,7 +201,7 @@ class TodoIntegrationTest {
             todoRepository.saveAll(List.of(notDoneItem, doneItem));
 
             // When & Then
-            mockMvc.perform(get("/api/v1/todos")
+            mockMvc.perform(get("/v1/todos")
                             .param("includeAll", "true")
                             .param("page", "0")
                             .param("size", "20"))
@@ -238,7 +238,7 @@ class TodoIntegrationTest {
                     .build();
 
             // When & Then
-            mockMvc.perform(patch("/api/v1/todos/{id}/description", savedItem.getId())
+            mockMvc.perform(patch("/v1/todos/{id}/description", savedItem.getId())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(updateRequest)))
                     .andExpect(status().isBadRequest())
@@ -259,7 +259,7 @@ class TodoIntegrationTest {
             TodoItem savedItem = todoRepository.save(pastDueItem);
 
             // When & Then
-            mockMvc.perform(patch("/api/v1/todos/{id}/done", savedItem.getId()))
+            mockMvc.perform(patch("/v1/todos/{id}/done", savedItem.getId()))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.message").value("Cannot change status of a past due item (id: " + savedItem.getId() + ")"));
         }
@@ -276,7 +276,7 @@ class TodoIntegrationTest {
             Long nonExistingId = 999L;
 
             // When & Then
-            mockMvc.perform(get("/api/v1/todos/{id}", nonExistingId))
+            mockMvc.perform(get("/v1/todos/{id}", nonExistingId))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.message").value("Todo item not found with id: 999"));
         }
@@ -291,7 +291,7 @@ class TodoIntegrationTest {
                     .build();
 
             // When & Then
-            mockMvc.perform(post("/api/v1/todos")
+            mockMvc.perform(post("/v1/todos")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalidRequest)))
                     .andExpect(status().isBadRequest())

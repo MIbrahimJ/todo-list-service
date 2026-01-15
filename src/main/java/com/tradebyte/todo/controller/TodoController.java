@@ -19,7 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/todos")
+@RequestMapping("/v1/todos")
 @Tag(name = "Todo Items", description = "Todo Items Management API")
 public class TodoController {
 
